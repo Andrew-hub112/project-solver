@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Projectile Solver</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body{
+    font-family: Arial;
+    background:#111;
+    color:white;
+    text-align:center;
+}
+
+.container{
+    margin:20px auto;
+    width:400px;
+}
+
+input{
+    margin:5px;
+    padding:5px;
+    width:80px;
+}
+
+button{
+    padding:8px;
+    margin-top:10px;
+    cursor:pointer;
+}
+
+canvas{
+    background:white;
+    margin-top:20px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>Projectile Motion Solver</h2>
+
+<div class="container">
+
+<label>Initial Speed (m/s)</label><br>
+<input id="v0" value="60"><br>
+
+<label>Angle (degrees)</label><br>
+<input id="angle" value="30"><br>
+
+<label>Initial Height (m)</label><br>
+<input id="y0" value="30"><br>
+
+<button onclick="solve()">Solve & Plot</button>
+
+<h3>Results</h3>
+<div id="results"></div>
+
+<canvas id="chart" width="400" height="300"></canvas>
+
+</div>
+
+<script>
+
+let chart;
+
+function solve(){
+
+    let g = 9.8;
+
+    let v0 = parseFloat(document.getElementById("v0").value);
+    let angle = parseFloat(document.getElementById("angle").value) * Math.PI/180;
+    let y0 = parseFloat(document.getElementById("y0").value);
+
+    let v0x = v0 * Math.cos(angle);
+    let v0y = v0 * Math.sin(angle);
+
+    // Solve quadratic for time of flight
+    // y = y0 + v0y t - (1/2)gt^2 = 0
+
+    let a = -0.5 * g;
+    let b = v0y;
+    let c = y0;
+
+    let discriminant = b*b - 4*a*c;
+
+    let t1 = (-b + Math.sqrt(discriminant)) / (2*a);
+    let t2 = (-b - Math.sqrt(discriminant)) / (2*a);
+
+    let t = Math.max(t1, t2);
+
+    // Range
+    let range = v0x * t;
+
+    // Max height
+    let t_max = v0y / g;
+    let h_max = y0 + v0y*t_max - 0.5*g*t_max*t_max;
+
+    // Impact velocity
+    let vy_final = v0y - g*t;
+    let v_final = Math.sqrt(v0x*v0x + vy_final*vy_final);
+
+    // Display results
+    document.getElementById("results").innerHTML = `
+        Time of flight: ${t.toFixed(2)} s<br>
+        Range: ${range.toFixed(2)} m<br>
+        Max height: ${h_max.toFixed(2)} m<br>
+        Impact speed: ${v_final.toFixed(2)} m/s
+    `;
+
+    // Generate trajectory
+    let points = [];
+    let N = 100;
+
+    for(let i=0;i<=N;i++){
+        let ti = t*i/N;
+        let x = v0x * ti;
+        let y = y0 + v0y*ti - 0.5*g*ti*ti;
+        points.push({x:x, y:y});
+    }
+
+    // Destroy previous chart
+    if(chart) chart.destroy();
+
+    chart = new Chart(document.getElementById("chart"), {
+        type: 'scatter',
+        data: {
+            datasets: [{
+                label: 'Trajectory',
+                data: points,
+                showLine: true
+            }]
+        },
+        options: {
+            scales: {
+                x: {
+                    type: 'linear',
+                    position: 'bottom',
+                    title: {display:true, text:"x (m)"}
+                },
+                y: {
+                    title: {display:true, text:"y (m)"}
+                }
+            }
+        }
+    });
+}
+
+</script>
+
+</body>
+</html>
