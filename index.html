@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Projectile Solver</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -19,10 +20,10 @@ body{
     width:400px;
 }
 
-input{
+input, select{
     margin:5px;
     padding:5px;
-    width:80px;
+    width:120px;
 }
 
 button{
@@ -40,22 +41,29 @@ canvas{
 
 <body>
 
-<h2>Projectile Motion Solver</h2>
+<h2 id="title">Projectile Motion Solver</h2>
 
 <div class="container">
 
-<label>Initial Speed (m/s)</label><br>
+<select id="lang" onchange="setLanguage()">
+    <option value="en">English</option>
+    <option value="es">Español</option>
+</select>
+
+<br>
+
+<label id="label_v0">Initial Speed (m/s)</label><br>
 <input id="v0" value="60"><br>
 
-<label>Angle (degrees)</label><br>
+<label id="label_angle">Angle (degrees)</label><br>
 <input id="angle" value="30"><br>
 
-<label>Initial Height (m)</label><br>
+<label id="label_y0">Initial Height (m)</label><br>
 <input id="y0" value="30"><br>
 
-<button onclick="solve()">Solve & Plot</button>
+<button onclick="solve()" id="solve_btn">Solve & Plot</button>
 
-<h3>Results</h3>
+<h3 id="results_title">Results</h3>
 <div id="results"></div>
 
 <canvas id="chart" width="400" height="300"></canvas>
@@ -64,9 +72,54 @@ canvas{
 
 <script>
 
+// 🌐 TRANSLATIONS
+const translations = {
+    en: {
+        title: "Projectile Motion Solver",
+        v0: "Initial Speed (m/s)",
+        angle: "Angle (degrees)",
+        y0: "Initial Height (m)",
+        solve: "Solve & Plot",
+        results: "Results",
+        time: "Time of flight",
+        range: "Range",
+        height: "Max height",
+        impact: "Impact speed"
+    },
+    es: {
+        title: "Simulador de Movimiento Parabólico",
+        v0: "Velocidad Inicial (m/s)",
+        angle: "Ángulo (grados)",
+        y0: "Altura Inicial (m)",
+        solve: "Resolver y Graficar",
+        results: "Resultados",
+        time: "Tiempo de vuelo",
+        range: "Alcance",
+        height: "Altura máxima",
+        impact: "Velocidad de impacto"
+    }
+};
+
+// 🌐 SET LANGUAGE
+function setLanguage(){
+    let lang = document.getElementById("lang").value;
+    let t = translations[lang];
+
+    document.getElementById("title").innerText = t.title;
+    document.getElementById("label_v0").innerText = t.v0;
+    document.getElementById("label_angle").innerText = t.angle;
+    document.getElementById("label_y0").innerText = t.y0;
+    document.getElementById("solve_btn").innerText = t.solve;
+    document.getElementById("results_title").innerText = t.results;
+}
+
 let chart;
 
+// ⚙️ SOLVER
 function solve(){
+
+    let lang = document.getElementById("lang").value;
+    let t_text = translations[lang];
 
     let g = 9.8;
 
@@ -76,9 +129,6 @@ function solve(){
 
     let v0x = v0 * Math.cos(angle);
     let v0y = v0 * Math.sin(angle);
-
-    // Solve quadratic for time of flight
-    // y = y0 + v0y t - (1/2)gt^2 = 0
 
     let a = -0.5 * g;
     let b = v0y;
@@ -91,26 +141,21 @@ function solve(){
 
     let t = Math.max(t1, t2);
 
-    // Range
     let range = v0x * t;
 
-    // Max height
     let t_max = v0y / g;
     let h_max = y0 + v0y*t_max - 0.5*g*t_max*t_max;
 
-    // Impact velocity
     let vy_final = v0y - g*t;
     let v_final = Math.sqrt(v0x*v0x + vy_final*vy_final);
 
-    // Display results
     document.getElementById("results").innerHTML = `
-        Time of flight: ${t.toFixed(2)} s<br>
-        Range: ${range.toFixed(2)} m<br>
-        Max height: ${h_max.toFixed(2)} m<br>
-        Impact speed: ${v_final.toFixed(2)} m/s
+        ${t_text.time}: ${t.toFixed(2)} s<br>
+        ${t_text.range}: ${range.toFixed(2)} m<br>
+        ${t_text.height}: ${h_max.toFixed(2)} m<br>
+        ${t_text.impact}: ${v_final.toFixed(2)} m/s
     `;
 
-    // Generate trajectory
     let points = [];
     let N = 100;
 
@@ -121,7 +166,6 @@ function solve(){
         points.push({x:x, y:y});
     }
 
-    // Destroy previous chart
     if(chart) chart.destroy();
 
     chart = new Chart(document.getElementById("chart"), {
@@ -137,16 +181,16 @@ function solve(){
             scales: {
                 x: {
                     type: 'linear',
-                    position: 'bottom',
-                    title: {display:true, text:"x (m)"}
+                    position: 'bottom'
                 },
-                y: {
-                    title: {display:true, text:"y (m)"}
-                }
+                y: {}
             }
         }
     });
 }
+
+// Initialize language on load
+setLanguage();
 
 </script>
 
